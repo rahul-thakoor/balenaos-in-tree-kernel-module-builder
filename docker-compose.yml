@@ -1,0 +1,17 @@
+version: '2'
+services:
+  in-tree-kernel-modules:
+    privileged: true
+    build:
+      context: ./
+      # dockerfile: Dockerfile.template
+      args:
+        OS_REPOSITORY: balena-os/balena-raspberrypi
+        # OS_REPOSITORY: balena-os/balena-generic
+        BOARD: raspberrypi4-64
+        # BOARD: generic-aarch64
+        BALENA_OS_VERSION: v2.115.1+rev3
+    labels:
+      io.balena.features.sysfs: '1'
+      io.balena.features.procfs: '1'
+      io.balena.features.kernel-modules: '1'

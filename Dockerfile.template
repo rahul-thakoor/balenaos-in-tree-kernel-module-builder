@@ -1,0 +1,45 @@
+FROM bh.cr/gh_rahul_thakoor/yocto-builder-base-%%BALENA_ARCH%% as BUILD_BASE
+
+ARG OS_REPOSITORY
+ARG BOARD=%%BALENA_MACHINE_NAME%%
+ARG BALENA_OS_VERSION
+
+WORKDIR /src/app
+
+RUN git clone -b ${BALENA_OS_VERSION} --recurse-submodules https://github.com/${OS_REPOSITORY} os-source
+
+ 
+COPY --chown=build:build build.sh ./
+
+RUN chmod u+x ./build.sh
+
+COPY meta-balena-block meta-balena-block
+
+USER build
+
+RUN ./build.sh ${BOARD} balena-block ../../meta-balena-block/conf/samples
+
+USER root
+
+WORKDIR /usr/src/artifacts
+
+RUN tar xf /src/app/block.tar.gz --directory /usr/src/artifacts && ls -l /usr/src/artifacts
+
+RUN apt-get update && apt-get install -y tree
+
+RUN tree /usr/src/artifacts
+
+
+FROM balenalib/%%BALENA_ARCH%%-alpine
+
+WORKDIR /src/app
+
+COPY --from=BUILD_BASE /usr/src/artifacts/ /in-tree-kernel-modules
+
+RUN install_packages kmod
+
+COPY start.sh ./
+
+RUN chmod u+x ./start.sh
+
+CMD ["sh","./start.sh"]
